@@ -983,8 +983,8 @@ class SharedExchangeQuery : public std::enable_shared_from_this<SharedExchangeQu
     if (trace_context_size > 0) {
       auto trace_context = rpc::ParseTraceContext(Slice(input, trace_context_size));
       if (trace_context.ok()) {
-        if (dist_trace::IsDistTraceEnabled()) {
-          trace_span_ = dist_trace::StartServerSpan(
+        if (dist_trace::DistTrace::IsEnabled()) {
+          trace_span_ = dist_trace::DistTrace::StartServerSpan(
               GetSharedMemSpanName(T::kReqType), *trace_context);
           if (trace_span_) {
             trace_span_->SetAttribute("rpc.system", "yb_shmem");
@@ -1403,7 +1403,7 @@ Result<std::pair<PgClientSessionOperations, VectorIndexQueryPtr>> PrepareOperati
         RETURN_NOT_OK(result.second->Prepare(arena, read, table, ops));
       } else {
         auto read_op = std::make_shared<client::YBPgsqlReadOp>(table, arena, *sidecars, &read);
-        if (dist_trace::HasActiveContext() && read.has_index_request()) {
+        if (dist_trace::DistTrace::HasActiveContext() && read.has_index_request()) {
           auto index_table = tables.Get(read.index_request().table_id());
           if (index_table.ok()) {
             read_op->set_index_table(*index_table);
@@ -4773,7 +4773,7 @@ BOOST_PP_SEQ_FOR_EACH(
 
 void PreparePgTablesQuery(
     const LWPgPerformRequestPB& req, boost::container::small_vector_base<TableId>& table_ids) {
-  const bool tracing = dist_trace::HasActiveContext();
+  const bool tracing = dist_trace::DistTrace::HasActiveContext();
   for (const auto& op : req.ops()) {
     AddIfMissing(table_ids, op.has_read() ? op.read().table_id() : op.write().table_id());
     if (tracing && op.has_read() && op.read().has_index_request()) {

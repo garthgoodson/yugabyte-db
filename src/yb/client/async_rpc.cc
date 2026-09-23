@@ -340,7 +340,7 @@ namespace {
 
 // One "name(id)" entry per distinct table in the batch, mirroring pggate's Perform attribute.
 void PublishPendingRpcTableNames(const InFlightOps& ops) {
-  if (!dist_trace::HasActiveContext()) {
+  if (!dist_trace::DistTrace::HasActiveContext()) {
     return;
   }
   std::string joined_names;
@@ -364,7 +364,7 @@ void PublishPendingRpcTableNames(const InFlightOps& ops) {
     }
   }
   if (!joined_names.empty()) {
-    dist_trace::AddPendingRpcStringAttr("rpc.table_names", std::move(joined_names));
+    dist_trace::DistTrace::AddPendingRpcStringAttr("rpc.table_names", std::move(joined_names));
   }
 }
 
